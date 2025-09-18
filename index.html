@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>🐢 Python Turtle Playground (Static)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Bulma（仅样式，非必须，可改为本地） -->
+  <link rel="stylesheet" href="./style/bulma.min.css">
+  <link rel="stylesheet" href="./style/animate.min.css"/>
+
+  <link rel="stylesheet" href="./style/layout.css">
+  <link rel="stylesheet" href="./style/theme.css">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shepherd.js@9.1.1/dist/css/shepherd.css" />
+  <script src="https://cdn.jsdelivr.net/npm/shepherd.js@9.1.1/dist/js/shepherd.min.js"></script>
+
+  <!-- 本地 Monaco：请确保 monaco/vs/ 存在 -->
+  <script src="monaco/vs/loader.js"></script>
+</head>
+<body>
+
+  <nav class="navbar" role="navigation">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="#" style="color:#61dafb; font-weight:700;">🐢 Turtle Playground</a>
+      <button id="startTourBtn" class="button is-info is-small">🎓 教学</button>
+    </div>
+  </nav>
+
+  <section class="section">
+    <div class="container">
+      <div class="columns is-variable is-6">
+        <!-- 左侧：编辑器与控制 -->
+        <div class="column is-half  animate__animated animate__fadeInLeft">
+            <h2 class="subtitle is-5">编辑 Python 代码</h2>
+          <div id="editor-container"></div>
+
+          <div class="buttons mt-3">
+            <button id="runBtn" class="button is-primary">▶ 运行</button>
+            <button id="stopBtn" class="button is-danger is-light">⏹ 停止/清空</button>
+            <button id="saveBtn" class="button is-link is-light">💾 保存</button>
+            <div class="select is-small" style="margin-left:8px;">
+              <select id="examplesSelect" title="示例代码">
+                <option value="">示例：选择一个示例加载</option>
+                <option value="square">正方形</option>
+                <option value="spiral">彩色螺旋</option>
+                <option value="star">五角星</option>
+              </select>
+            </div>
+            
+
+          </div>
+
+          <div class="is-divider"></div>
+          <h2 class="subtitle is-6">输出</h2>
+          <pre id="output"></pre>
+        </div>
+
+        <!-- 右侧：Canvas -->
+        <div class="column is-half animate__animated animate__fadeInRight">
+          <h2 class="subtitle is-5">绘图区域</h2>
+          <div id="turtle-area" class="box">
+            <div id="turtle-canvas"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  
+  <script src="./script/examples.js"></script>
+  <!-- 加载外部 snippets.js 文件 -->
+  <script src="./script/snippets.js"></script>
+  <script>
+    // 配置 Monaco 的 AMD 路径
+    require.config({ paths: { 'vs': 'monaco/vs' } });
+    let editor;
+
+
+    // 初始化 Monaco
+    require(['vs/editor/editor.main'], function () {
+      // 初始代码（优先从 localStorage 恢复）
+      const saved = localStorage.getItem('turtle_code');
+      const initial = saved || `from turtle import *
+speed(8)
+
+# 画一个正方形
+color("deepskyblue")
+for i in range(4):
+    forward(100)
+    right(90)
+
+penup()
+goto(-50, -50)
+pendown()
+color("red")
+circle(40)
+
+done()`;
+
+      editor = monaco.editor.create(document.getElementById('editor-container'), {
+        value: initial,
+        language: 'python',
+        theme: 'vs-light',
+        automaticLayout: true,
+        fontSize: 14,
+        minimap: { enabled: false },
+        tabSize: 4,
+        insertSpaces: true,
+        smoothScrolling: true,
+        scrollBeyondLastLine: false
+      });
+
+      // 简单的 Turtle 片段与补全
+      monaco.languages.registerCompletionItemProvider('python', {
+        provideCompletionItems: function(model, position) {
+          const suggestions = window.createPythonSnippets(monaco);
+          return { suggestions };
+        }
+      });
+
+      // 示例选择
+      const examplesSelect = document.getElementById('examplesSelect');
+      examplesSelect.addEventListener('change', () => {
+        const key = examplesSelect.value;
+        if (key && EXAMPLES[key]) {
+          editor.setValue(EXAMPLES[key]);
+        }
+      });
+    });
+  </script>
+
+  <!-- 本地 Skulpt：请确保 script/ 下两个文件存在 -->
+  <script src="script/skulpt.min.js"></script>
+  <script src="script/skulpt-stdlib.js"></script>
+  <script>
+    const outEl = document.getElementById("output");
+    const runBtn = document.getElementById("runBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const saveBtn = document.getElementById("saveBtn");
+    const canvasTargetId = "turtle-canvas";
+
+    function outf(text) { outEl.textContent += text; }
+    function clearOut() { outEl.textContent = ""; }
+
+    function builtinRead(x) {
+      if (Sk.builtinFiles === undefined || Sk.builtinFiles["files"][x] === undefined) {
+        throw "File not found: '" + x + "'";
+      }
+      return Sk.builtinFiles["files"][x];
+    }
+
+    function resetCanvas() {
+      const tgt = document.getElementById(canvasTargetId);
+      if (tgt) tgt.innerHTML = "";
+    }
+
+    async function runCode() {
+      clearOut();
+      resetCanvas();
+
+      const prog = window.monaco ? monaco.editor.getModels()[0].getValue() : '';
+
+      // 保存代码到 localStorage
+      try { localStorage.setItem('turtle_code', prog); } catch (e) {}
+
+      Sk.configure({
+        output: outf,
+        read: builtinRead,
+        __future__: Sk.python3
+      });
+
+      Sk.TurtleGraphics = Sk.TurtleGraphics || {};
+      Sk.TurtleGraphics.target = canvasTargetId;
+
+      try {
+        await Sk.misceval.asyncToPromise(() =>
+          Sk.importMainWithBody("<stdin>", false, prog, true)
+        );
+        outf("\n[完成]\n");
+      } catch (err) {
+        outf("\n[错误] " + err.toString() + "\n");
+        console.error(err);
+      }
+    }
+
+    function stopAndClear() {
+      resetCanvas();
+      clearOut();
+    }
+
+    function saveCode() {
+      const prog = window.monaco ? monaco.editor.getModels()[0].getValue() : '';
+      try {
+        localStorage.setItem('turtle_code', prog);
+        outEl.textContent += "\n[已保存到本地]";
+      } catch (e) {
+        outEl.textContent += "\n[保存失败]";
+      }
+    }
+
+    runBtn.addEventListener("click", runCode);
+    stopBtn.addEventListener("click", stopAndClear);
+    saveBtn.addEventListener("click", saveCode);
+  </script>
+  <script>
+    // 替换 Skulpt 的 input() 弹窗
+    Sk.inputfun = function(promptText) {
+      return new Promise((resolve, reject) => {
+        const modal = document.getElementById("custom-input-modal");
+        const inputField = document.getElementById("custom-input-field");
+        const confirmBtn = document.getElementById("custom-input-confirm");
+        const cancelBtn = document.getElementById("custom-input-cancel");
+  
+        inputField.value = "";
+        modal.classList.add("is-active");
+  
+        confirmBtn.onclick = () => {
+          modal.classList.remove("is-active");
+          resolve(inputField.value);
+        };
+  
+        cancelBtn.onclick = () => {
+          modal.classList.remove("is-active");
+          reject("用户取消输入");
+        };
+  
+        inputField.onkeydown = (e) => {
+          if (e.key === "Enter") {
+            confirmBtn.click();
+          }
+        };
+  
+        inputField.focus();
+      });
+    };
+  </script>
+  <script>
+    document.getElementById('startTourBtn').addEventListener('click', () => {
+      const tour = new Shepherd.Tour({
+        defaultStepOptions: {
+          cancelIcon: { enabled: true },
+          classes: 'shepherd-theme-arrows',
+          scrollTo: { behavior: 'smooth', block: 'center' }
+        }
+      });
+
+      tour.addStep({
+        title: '编辑器区域',
+        text: '在这里写你的 Python turtle 代码。',
+        attachTo: { element: '#editor-container', on: 'bottom' },
+        buttons: [{ text: '下一步', action: tour.next }]
+      });
+
+      tour.addStep({
+        title: '运行按钮',
+        text: '点击运行,你的代码会在右侧绘图区域展示效果。',
+        attachTo: { element: '#runBtn', on: 'bottom' },
+        buttons: [{ text: '下一步', action: tour.next }]
+      });
+
+      tour.addStep({
+        title: '绘图区域',
+        text: '这里是 turtle 绘图的展示区。',
+        attachTo: { element: '#turtle-area', on: 'bottom' },
+        buttons: [{ text: '完成', action: tour.complete }]
+      });
+
+      tour.start();
+  });
+
+  </script>
+  
+  <!-- 自定义输入框浮层 -->
+<div id="custom-input-modal" class="modal">
+  <div class="modal-background"></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">请输入</p>
+    </header>
+    <section class="modal-card-body">
+      <input id="custom-input-field" class="input" type="text" placeholder="输入内容…" />
+    </section>
+    <footer class="modal-card-foot">
+      <button id="custom-input-confirm" class="button is-primary">确认</button>
+      <button id="custom-input-cancel" class="button is-light">取消</button>
+    </footer>
+  </div>
+</div>
+
+<div id="focus-overlay"></div>
+
+</body>
+</html>

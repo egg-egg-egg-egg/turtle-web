@@ -1,0 +1,78 @@
+/* theme.css */
+
+:root {
+    /* 默认主题变量（light） */
+    --bg: #f5f7fb;
+    --text: #1f2328;
+    --panel: #ffffff;
+    --border: #d0d7de;
+    --canvas-bg: #ffffff;
+    --accent: #3b82f6;
+    --output-bg: #0b0b0b;
+    --output-text: #00ff9c;
+  }
+  
+  [data-theme="light"] {
+    --bg: #f5f7fb;
+    --text: #1f2328;
+    --panel: #ffffff;
+    --border: #d0d7de;
+    --canvas-bg: #ffffff;
+    --accent: #3b82f6;
+    --output-bg: #0b0b0b;
+    --output-text: #00ff9c;
+  }
+  
+  [data-theme="dark"] {
+    --bg: #1e1e1e;
+    --text: #d1d5db;
+    --panel: #252526;
+    --border: #333;
+    --canvas-bg: #ffffff;
+    --accent: #60a5fa;
+    --output-bg: #0b0b0b;
+    --output-text: #0ef78d;
+  }
+  
+  [data-theme="blue"] {
+    --bg: #0b1220;
+    --text: #dbeafe;
+    --panel: #0f172a;
+    --border: #1e293b;
+    --canvas-bg: #ffffff;
+    --accent: #38bdf8;
+    --output-bg: #0b0f1a;
+    --output-text: #22f0ff;
+  }
+  
+  /* 应用变量 */
+  body {
+    background: var(--bg);
+    color: var(--text);
+  }
+  
+  .title, .subtitle {
+    color: var(--text);
+  }
+  
+  #editor-container {
+    background: var(--panel);
+    border: 1px solid var(--border);
+  }
+  
+  #turtle-area {
+    background: var(--canvas-bg);
+    border: 1px solid var(--border);
+  }
+  
+  #output {
+    background: var(--output-bg);
+    color: var(--output-text);
+    border: 1px solid var(--border);
+  }
+  
+  .button.is-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  

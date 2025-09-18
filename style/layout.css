@@ -1,0 +1,91 @@
+/* layout.css */
+
+body {
+    font-family: system-ui, sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .container {
+    padding: 2rem;
+  }
+  
+  #editor-container {
+    height: 460px;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  
+  #turtle-area {
+    min-height: 460px;
+    border-radius: 6px;
+    display: flex;
+    align-items: stretch;
+    justify-content: stretch;
+    overflow: hidden;
+  }
+  
+  #turtle-canvas {
+    width: 100%;
+    height: 100%;
+  }
+  
+  #output {
+    height: 150px;
+    padding: 10px;
+    overflow: auto;
+    font-size: 0.9rem;
+    border-radius: 6px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  
+  .button + .button {
+    margin-left: 0.5rem;
+  }
+  
+  .select {
+    margin-left: 0.5rem;
+  }
+  /* 自定义输入框样式（可放入 layout.css） */
+.modal-card {
+  max-width: 400px;
+}
+.modal-card-head,
+.modal-card-foot {
+  background: var(--panel);
+  color: var(--text);
+}
+.modal-card-body {
+  background: var(--panel);
+}
+.input {
+  background: var(--canvas-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+#focus-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.4); /* 半透明白色 */
+  backdrop-filter: blur(6px);           /* 虚化背景 */
+  z-index: 9998;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* 激活时显示遮罩 */
+#focus-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* 高亮目标组件（例如运行按钮） */
+.focus-highlight {
+  position: relative;
+  z-index: 9999 !important;
+  box-shadow: 0 0 0 4px var(--accent), 0 0 12px var(--accent);
+  border-radius: 6px;
+  transition: box-shadow 0.3s ease;
+}
